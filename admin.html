@@ -1,0 +1,80 @@
+<div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-slate-200">
+        <h1 class="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+        <p class="text-sm text-slate-500">Buat album baru dan hasilkan link pemilihan foto untuk klien Anda.</p>
+    </div>
+
+    <!-- Form Pembuatan Album -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Buat Link Album Klien</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1">Nama Klien / Nama Album</label>
+                <input type="text" id="client-name" placeholder="Contoh: Wedding Sinta & Rian" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">Batas Maksimal Foto yang Dipilih</label>
+                <input type="number" id="max-photos" placeholder="Contoh: 10" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">Nomor WhatsApp Admin (Format: 628...)</label>
+                <input type="text" id="admin-phone" placeholder="Contoh: 6281234567890" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">Link Folder Google Drive (Referensi)</label>
+                <input type="text" id="gdrive-link" placeholder="https://drive.google.com/drive/folders/..." class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <button onclick="buatLinkAlbum()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-sm cursor-pointer">
+                Generate Link Album
+            </button>
+        </div>
+    </div>
+
+    <!-- Hasil Link (Hidden by default) -->
+    <div id="result-box" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+        <h3 class="text-emerald-900 font-bold mb-2">Link Album Berhasil Dibuat! 🎉</h3>
+        <p class="text-xs text-emerald-700 mb-3">Salinkan link di bawah ini dan kirimkan langsung ke WhatsApp klien:</p>
+        
+        <div class="flex gap-2">
+            <input type="text" id="generated-url" readonly class="w-full bg-white border border-emerald-300 rounded-xl p-3 text-sm text-slate-600 select-all">
+            <button onclick="salinLink()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 rounded-xl text-sm transition shrink-0 cursor-pointer">
+                Salin Link
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Script Admin -->
+<script>
+    function buatLinkAlbum() {
+        const clientName = document.getElementById('client-name').value.trim();
+        const maxPhotos = document.getElementById('max-photos').value.trim();
+        const adminPhone = document.getElementById('admin-phone').value.trim();
+        const gdriveLink = document.getElementById('gdrive-link').value.trim();
+
+        if (!clientName || !maxPhotos || !adminPhone) {
+            alert('Nama klien, batas maksimal foto, dan nomor WhatsApp Admin harus diisi!');
+            return;
+        }
+
+        const slug = clientName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const uniqueUrl = `${window.location.origin}/index.html?album=${encodeURIComponent(clientName)}&max=${maxPhotos}&phone=${adminPhone}&gdrive=${encodeURIComponent(gdriveLink)}`;
+
+        document.getElementById('generated-url').value = uniqueUrl;
+        document.getElementById('result-box').classList.remove('hidden');
+    }
+
+    function salinLink() {
+        const urlInput = document.getElementById('generated-url');
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(urlInput.value);
+        alert('Link berhasil disalin ke clipboard!');
+    }
+</script>
