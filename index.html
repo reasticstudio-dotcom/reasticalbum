@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pilih Foto Album - Client Proofing</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Pilih Foto Album</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
 
-    <!-- Header / Info Album -->
     <header class="bg-white shadow-sm sticky top-0 z-30 border-b border-slate-100">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <div>
                 <h1 class="text-xl font-bold text-slate-900">Pilih Foto: <span id="nama-album" class="text-indigo-600">Album</span></h1>
-                <p class="text-xs text-slate-500">Klik/centang foto pilihan Anda sesuai batas kuota yang ditentukan.</p>
+                <p class="text-xs text-slate-500">Centang foto pilihan Anda sesuai batas kuota.</p>
             </div>
             <div class="bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl text-sm flex items-center gap-2">
                 <span class="font-medium text-indigo-700">Terpilih:</span>
@@ -23,77 +21,86 @@
         </div>
     </header>
 
-    <!-- Konten Utama -->
     <main class="max-w-5xl mx-auto px-4 mt-6">
-        
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12 text-slate-500">
+            <p class="text-base font-semibold">Sedang memuat foto dari Google Drive...</p>
+            <p class="text-xs text-slate-400 mt-1">Mohon tunggu sebentar.</p>
+        </div>
+
         <!-- Peringatan Kuota -->
-        <div id="alert-box" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+        <div id="alert-box" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm">
             ⚠️ <span id="alert-text">Batas maksimal pemilihan foto sudah tercapai!</span>
         </div>
 
-        <!-- Grid Galeri Foto (Otomatis dari Link Admin) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="gallery-grid">
-            <!-- Foto akan dimuat secara dinamis dari link admin -->
-        </div>
+        <!-- Galeri Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="gallery-grid"></div>
 
-        <!-- Bagian Catatan & Kirim -->
-        <div class="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <!-- Catatan & WhatsApp -->
+        <div id="action-section" class="hidden mt-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h2 class="text-base font-bold text-slate-900 mb-2">Catatan / Request Edit Khusus</h2>
-            <p class="text-xs text-slate-500 mb-4">Tuliskan jika ada permintaan khusus untuk foto-foto yang Anda pilih.</p>
-            <textarea id="catatan" rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tulis catatan di sini..."></textarea>
+            <textarea id="catatan" rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tulis catatan jika ada..."></textarea>
             
-            <button onclick="kirimKeWhatsApp()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                <span>Kirim Pilihan ke WhatsApp Admin</span>
+            <button onclick="kirimKeWhatsApp()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition cursor-pointer shadow-sm">
+                Kirim Pilihan ke WhatsApp Admin
             </button>
         </div>
     </main>
 
-    <!-- Script Klien -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const albumParam = urlParams.get('album');
         const maxParam = urlParams.get('max');
-        const photosParam = urlParams.get('photos'); // Daftar foto dari admin
+        const folderParam = urlParams.get('folder');
+        const scriptParam = urlParams.get('script');
 
-        const namaAlbum = albumParam ? albumParam.replace(/-/g, ' ').toUpperCase() : "ALBUM KLIEN";
         const maxLimit = maxParam ? parseInt(maxParam) : 5;
-
-        document.getElementById('nama-album').textContent = namaAlbum;
+        document.getElementById('nama-album').textContent = albumParam ? albumParam.replace(/-/g, ' ').toUpperCase() : "ALBUM";
         document.getElementById('max-limit').textContent = maxLimit;
 
-        // Render foto ke galeri
-        const gridContainer = document.getElementById('gallery-grid');
-        
-        if (photosParam) {
-            // Asumsi admin memasukkan daftar link/nama foto dipisahkan koma atau baris baru
-            let photoList = decodeURIComponent(photosParam).split(',');
-            
-            gridContainer.innerHTML = '';
-            photoList.forEach((photoUrl, index) => {
-                let cleanUrl = photoUrl.trim();
-                let fileName = `Foto_${index + 1}.jpg`;
+        if (folderParam && scriptParam) {
+            fetch(`${scriptParam}?folderUrl=${encodeURIComponent(folderParam)}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    if (data.status === 'success' && data.photos.length > 0) {
+                        renderGallery(data.photos);
+                        document.getElementById('action-section').classList.remove('hidden');
+                    } else {
+                        document.getElementById('gallery-grid').innerHTML = `<p class="col-span-full text-center text-red-500 py-8">Tidak ada foto ditemukan di folder tersebut atau folder belum disetting Publik.</p>`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('gallery-grid').innerHTML = `<p class="col-span-full text-center text-red-500 py-8">Gagal memuat foto. Periksa kembali URL script Anda.</p>`;
+                });
+        } else {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('gallery-grid').innerHTML = `<p class="col-span-full text-center text-slate-400 py-8">Parameter folder belum lengkap.</p>`;
+        }
 
+        function renderGallery(photos) {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+
+            photos.forEach(photo => {
                 let card = document.createElement('div');
-                card.className = "photo-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md relative group";
+                card.className = "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative group";
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-100 overflow-hidden">
-                        <img src="${cleanUrl}" alt="${fileName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                        <label class="absolute top-3 right-3 cursor-pointer z-10 bg-white/80 p-1.5 rounded-full shadow">
-                            <input type="checkbox" name="foto" value="${fileName}" class="foto-checkbox w-5 h-5 accent-indigo-600 rounded cursor-pointer">
+                        <img src="${photo.url}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <label class="absolute top-3 right-3 cursor-pointer z-10 bg-white/90 p-1.5 rounded-full shadow">
+                            <input type="checkbox" name="foto" value="${photo.name}" class="foto-checkbox w-5 h-5 accent-indigo-600 rounded cursor-pointer">
                         </label>
                     </div>
                     <div class="p-3 text-center text-xs font-medium text-slate-600 truncate">
-                        ${fileName}
+                        ${photo.name}
                     </div>
                 `;
-                gridContainer.appendChild(card);
+                grid.appendChild(card);
             });
-        } else {
-            gridContainer.innerHTML = `<p class="col-span-full text-center text-slate-400 py-8">Belum ada foto yang dimuat untuk album ini.</p>`;
-        }
 
-        // Logika Batasan & Centang
-        setTimeout(() => {
+            // Logika Checkbox & Limit
             const checkboxes = document.querySelectorAll('.foto-checkbox');
             const counter = document.getElementById('counter');
             const alertBox = document.getElementById('alert-box');
@@ -101,42 +108,32 @@
             checkboxes.forEach(cb => {
                 cb.addEventListener('change', () => {
                     const checkedCount = document.querySelectorAll('.foto-checkbox:checked').length;
-                    
                     if (checkedCount > maxLimit) {
                         cb.checked = false;
-                        showAlert(`Maksimal Anda hanya boleh memilih ${maxLimit} foto!`);
+                        alertBox.classList.remove('hidden');
                     } else {
                         counter.textContent = checkedCount;
-                        if(checkedCount === maxLimit) {
-                            showAlert(`Pilihan sudah mencapai batas maksimal (${maxLimit} foto).`);
-                        } else {
+                        if(checkedCount < maxLimit) {
                             alertBox.classList.add('hidden');
                         }
                     }
                 });
             });
-        }, 500);
-
-        function showAlert(msg) {
-            document.getElementById('alert-text').textContent = msg;
-            alertBox.classList.remove('hidden');
         }
 
-        // Kirim ke WhatsApp
         function kirimKeWhatsApp() {
-            const selectedFotos = Array.from(document.querySelectorAll('.foto-checkbox:checked')).map(cb => cb.value);
+            const selected = Array.from(document.querySelectorAll('.foto-checkbox:checked')).map(cb => cb.value);
             const catatan = document.getElementById('catatan').value.trim();
 
-            if (selectedFotos.length === 0) {
-                alert('Silakan centang/pilih minimal 1 foto terlebih dahulu!');
+            if (selected.length === 0) {
+                alert('Pilih minimal 1 foto terlebih dahulu!');
                 return;
             }
 
-            const adminPhone = "6281234567890"; // Ganti dengan nomor WhatsApp Admin Anda
-            const pesan = `Halo Admin, saya sudah memilih foto untuk album *${namaAlbum}*:\n\n*Jumlah Pilihan:* ${selectedFotos.length} / ${maxLimit} foto\n*Daftar Nama File Foto:*\n- ${selectedFotos.join('\n- ')}\n\n*Catatan Edit:*\n${catatan ? catatan : '(Tidak ada catatan)'}`;
+            const adminPhone = "6281234567890"; // Ganti nomor WhatsApp Anda
+            const pesan = `Halo Admin, saya memilih foto untuk album *${document.getElementById('nama-album').textContent}*:\n\n*Jumlah:* ${selected.length} / ${maxLimit}\n*Daftar File:*\n- ${selected.join('\n- ')}\n\n*Catatan:* ${catatan || '-'}`;
             
-            const encodedPesan = encodeURIComponent(pesan);
-            window.open(`https://wa.me/${adminPhone}?text=${encodedPesan}`, '_blank');
+            window.open(`https://wa.me/${adminPhone}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
     </script>
 </body>
