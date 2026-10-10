@@ -3,80 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Buat Album Klien</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Admin Dashboard - Client Proofing</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen p-4 sm:p-8">
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
+        <p class="text-sm text-slate-500 mb-6">Buat link pemilihan foto otomatis dari folder Google Drive.</p>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-1">Nama Klien / Album</label>
+                <input type="text" id="client-name" placeholder="Contoh: Sinta & Rian" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Batas Maksimal Foto Dipilih</label>
+                <input type="number" id="max-photos" placeholder="Contoh: 10" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Link Folder Google Drive</label>
+                <input type="text" id="gdrive-folder" placeholder="https://drive.google.com/drive/folders/..." class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Web App URL (Dari Google Apps Script)</label>
+                <input type="text" id="script-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="text-xs text-slate-400 mt-1">https://script.google.com/macros/s/AKfycby3ewsoOefTZL9Pj62W_qTv7P-2bw-LiFD1147RCOH6Rl98qiMFiSTAWbjMFHr0a3Sbqg/exec.</p>
+            </div>
 
-    <div class="max-w-3xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-slate-200">
-            <h1 class="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-            <p class="text-sm text-slate-500">Buat album pemilihan foto untuk klien.</p>
+            <button onclick="buatLinkAlbum()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition cursor-pointer">
+                Generate Link Album
+            </button>
         </div>
 
-        <!-- Form Pembuatan Album -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border border-slate-200">
-            <h2 class="text-lg font-bold text-slate-800 mb-4">Buat Link Album Klien</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Nama Klien / Album</label>
-                    <input type="text" id="client-name" placeholder="Contoh: Sinta & Rian" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Batas Maksimal Foto Dipilih</label>
-                    <input type="number" id="max-photos" placeholder="Contoh: 10" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Daftar Link Foto (Pisahkan dengan koma atau baris baru)</label>
-                    <textarea id="photos-list" rows="4" placeholder="https://link-gambar-1.jpg, https://link-gambar-2.jpg" class="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                    <p class="text-xs text-slate-500 mt-1">Masukkan link direct gambar (preview) yang bisa diakses publik.</p>
-                </div>
-
-                <button onclick="buatLinkAlbum()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-sm cursor-pointer">
-                    Generate Link Album
-                </button>
-            </div>
-        </div>
-
-        <!-- Hasil Link -->
-        <div id="result-box" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
-            <h3 class="text-emerald-900 font-bold mb-2">Link Album Berhasil Dibuat! 🎉</h3>
-            <p class="text-xs text-emerald-700 mb-3">Salin link ini dan kirimkan ke WhatsApp klien:</p>
-            
-            <div class="flex gap-2">
-                <input type="text" id="generated-url" readonly class="w-full bg-white border border-emerald-300 rounded-xl p-3 text-sm text-slate-600 select-all">
-                <button onclick="salinLink()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 rounded-xl text-sm transition shrink-0 cursor-pointer">
-                    Salin
-                </button>
-            </div>
+        <div id="result-box" class="hidden mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <h3 class="text-emerald-900 font-bold mb-1">Link Berhasil Dibuat!</h3>
+            <input type="text" id="generated-url" readonly class="w-full bg-white border border-emerald-300 rounded-lg p-2 text-xs text-slate-600 mb-2 select-all">
+            <button onclick="salinLink()" class="bg-emerald-600 text-white text-xs px-4 py-2 rounded-lg font-semibold">Salin Link</button>
         </div>
     </div>
 
-    <!-- Script Admin -->
     <script>
         function buatLinkAlbum() {
             const clientName = document.getElementById('client-name').value.trim();
             const maxPhotos = document.getElementById('max-photos').value.trim();
-            const photosList = document.getElementById('photos-list').value.trim();
+            const gdriveFolder = document.getElementById('gdrive-folder').value.trim();
+            const scriptUrl = document.getElementById('script-url').value.trim();
 
-            if (!clientName || !maxPhotos) {
-                alert('Nama klien dan batas maksimal foto harus diisi!');
+            if (!clientName || !maxPhotos || !gdriveFolder || !scriptUrl) {
+                alert('Semua kolom wajib diisi!');
                 return;
             }
 
             const slug = clientName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-            
             let origin = window.location.origin;
             let pathArray = window.location.pathname.split('/');
             let repoName = pathArray[1] ? '/' + pathArray[1] + '/' : '/';
 
-            const encodedPhotos = encodeURIComponent(photosList.replace(/\n/g, ','));
-            const uniqueUrl = `${origin}${repoName}index.html?album=${slug}&max=${maxPhotos}&photos=${encodedPhotos}`;
+            const uniqueUrl = `${origin}${repoName}index.html?album=${slug}&max=${maxPhotos}&folder=${encodeURIComponent(gdriveFolder)}&script=${encodeURIComponent(scriptUrl)}`;
 
             document.getElementById('generated-url').value = uniqueUrl;
             document.getElementById('result-box').classList.remove('hidden');
@@ -85,9 +68,8 @@
         function salinLink() {
             const urlInput = document.getElementById('generated-url');
             urlInput.select();
-            urlInput.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(urlInput.value);
-            alert('Link berhasil disalin ke clipboard!');
+            alert('Link disalin!');
         }
     </script>
 </body>
